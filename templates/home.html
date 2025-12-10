@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADI Onboarding Checklist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <svg width="80" height="30" viewBox="0 0 80 30">
+                    <text x="5" y="22" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#009DDC">ADI</text>
+                </svg>
+                <span class="nav-title">Onboarding Checklist</span>
+            </div>
+            <div class="nav-menu">
+                <span class="nav-user">Welcome, {{ username }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Onboarding Checklist</h1>
+            <p class="page-description">Verify and complete user onboarding tasks</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <div class="card-header">
+                <h2>User Information</h2>
+            </div>
+            <div class="card-body">
+                <form id="onboarding-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userid">User ID <span class="required">*</span></label>
+                            <input type="text" id="userid" name="userid" class="form-control" placeholder="Enter the uid of the user" required>
+                            <small class="form-text">Enter the Linux username in lowercase</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ritm_number">RITM/INC Number</label>
+                            <input type="text" id="ritm_number" name="ritm_number" class="form-control" placeholder="Enter RITM or INC number">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cc_emails">Additional CC Email Addresses</label>
+                        <input type="text" id="cc_emails" name="cc_emails" class="form-control" placeholder="email1@analog.com, email2@analog.com">
+                        <small class="form-text">Separate multiple email addresses with commas</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="selected_document">Onboarding Document</label>
+                        <select id="selected_document" name="selected_document" class="form-control">
+                            {% for doc in documents %}
+                                <option value="{{ doc }}">{{ doc if doc else '-- Select Document --' }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Run Checks</button>
+                        <button type="reset" class="btn btn-secondary" id="reset-btn">Clear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="results-container" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Checklist Results</h2>
+                </div>
+                <div class="card-body">
+                    <div id="results-content"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" style="display: none;">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Running checks, please wait...</p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Analog Devices, Inc. - Engineering Infrastructure Services</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('onboarding-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const userid = document.getElementById('userid').value.trim().toLowerCase();
+            const ritm_number = document.getElementById('ritm_number').value.trim();
+            const cc_emails = document.getElementById('cc_emails').value.trim();
+            const selected_document = document.getElementById('selected_document').value;
+
+            if (!userid) {
+                alert('Please enter a User ID');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results-container').style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('userid', userid);
+                formData.append('ritm_number', ritm_number);
+                formData.append('cc_emails', cc_emails);
+                formData.append('selected_document', selected_document);
+
+                const response = await fetch('/check_user', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+
+                // Display results
+                displayResults(data);
+                document.getElementById('results-container').style.display = 'block';
+
+                // Scroll to results
+                document.getElementById('results-container').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                alert('An error occurred: ' + error.message);
+            }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', function() {
+            document.getElementById('results-container').style.display = 'none';
+        });
+
+        function displayResults(data) {
+            const resultsContent = document.getElementById('results-content');
+            let html = '';
+
+            html += `<div class="result-header"><h3>Results for User: <strong>${data.userid}</strong></h3></div>`;
+
+            // Display each check
+            data.checks.forEach((check, index) => {
+                let statusClass = '';
+                let icon = '';
+
+                if (check.status === 'success') {
+                    statusClass = 'check-success';
+                    icon = '✅';
+                } else if (check.status === 'error') {
+                    statusClass = 'check-error';
+                    icon = '🚨';
+                } else if (check.status === 'warning') {
+                    statusClass = 'check-warning';
+                    icon = '⚠️';
+                } else if (check.status === 'info') {
+                    statusClass = 'check-info';
+                    icon = 'ℹ️';
+                }
+
+                html += `
+                    <div class="check-item ${statusClass}">
+                        <div class="check-header">
+                            <h4>${index + 1}. ${check.name}</h4>
+                            <span class="check-icon">${icon}</span>
+                        </div>
+                        <p class="check-message">${check.message}</p>
+                        ${check.info ? `<p class="check-info-text"><em>${check.info}</em></p>` : ''}
+                    </div>
+                `;
+            });
+
+            // Display final message
+            if (data.message) {
+                let messageClass = data.email_sent ? 'alert-success' : 'alert-warning';
+                html += `
+                    <div class="alert ${messageClass}" style="margin-top: 20px;">
+                        <strong>${data.email_sent ? '✓ Success:' : '⚠ Warning:'}</strong> ${data.message}
+                    </div>
+                `;
+            }
+
+            resultsContent.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

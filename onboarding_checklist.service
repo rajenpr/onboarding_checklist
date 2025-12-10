@@ -1,0 +1,15 @@
+[Unit]
+Description=ADI Onboarding Checklist Flask Application
+After=network.target mongod.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/usr/local/bin/onboarding_checklist
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+ExecStart=/usr/bin/python3 /usr/local/bin/onboarding_checklist/app.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

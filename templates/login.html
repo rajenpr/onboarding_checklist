@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADI Onboarding Checklist - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="adi-logo">
+                    <svg width="120" height="40" viewBox="0 0 120 40">
+                        <text x="10" y="30" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#009DDC">ADI</text>
+                    </svg>
+                </div>
+                <h1>Onboarding Checklist</h1>
+                <p class="subtitle">Engineering Infrastructure Services</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}" class="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Enter your LDAP username" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+
+            <div class="login-footer">
+                <p>Please use your LDAP credentials to log in</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
