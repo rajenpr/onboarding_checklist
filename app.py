@@ -1,4 +1,3 @@
-from __future__ import annotations
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import os
 import smtplib

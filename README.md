@@ -17,7 +17,7 @@ A Flask-based web application for managing user onboarding checklists at Analog 
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- Python 3.6 or higher
 - MongoDB running on localhost:27017
 - Access to ADI LDAP servers
 - Access to mail.analog.com SMTP server
