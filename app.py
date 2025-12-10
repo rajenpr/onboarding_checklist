@@ -8,8 +8,7 @@ from email import encoders
 import subprocess
 from datetime import datetime, timedelta
 from pymongo import MongoClient
-from subprocess import run
-from subprocess import getoutput
+from subprocess import run, getoutput, PIPE
 import ldap3
 from functools import wraps
 
@@ -107,7 +106,7 @@ def vdi_check(userid):
     sdc_domain = ['adbldesign', 'adbvdesign', 'adgtdesign', 'adsdesign', 'adsiv', 'bdcdesign', 'caidesign', 'csdesign', 'engus1', 'istdesign', 'mundesign', 'valdesign', 'engeu1']
     for loc in sdc_domain:
         vdi_host = userid + '-lx01.' + loc
-        ping_out = run(['ping', '-c 2', vdi_host], capture_output=True)
+        ping_out = run(['ping', '-c 2', vdi_host], stdout=PIPE, stderr=PIPE)
         if ping_out.returncode == 0:
             vdi_loc.append(loc)
     return vdi_loc
@@ -268,7 +267,7 @@ def check_user():
     }
 
     # Check 1: LDAP Check
-    output = run(["id", userid], capture_output=True, text=True)
+    output = run(["id", userid], stdout=PIPE, stderr=PIPE, universal_newlines=True)
     if output.returncode == 0:
         results['checks'].append({
             'name': 'Checking if user is in LDAP',
